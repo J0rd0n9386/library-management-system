@@ -66,7 +66,7 @@ User (1) ---- (1) Member (1) ---- (M) IssueRecord (M) ---- (1) BookCopy (M) ----
    ```
    mvn spring-boot:run
    ```
-4. API available at http://localhost:8080
+4. API available at http://localhost:8081
 
 ## Running Tests
 
