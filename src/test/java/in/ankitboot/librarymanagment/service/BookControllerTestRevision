@@ -1,0 +1,145 @@
+/*
+========================================================================
+ REVISION NOTES: BookControllerTest.java (MockMvc + Security Testing)
+========================================================================
+
+ GOAL: Controller ko test karna BINA real server chalaye, BINA real
+       DB touch kiye, aur security roles (ADMIN/MEMBER) simulate karke.
+
+
+ ------------------------------------------------------------------
+ 1) @WebMvcTest(BookController.class)
+ ------------------------------------------------------------------
+    -> Poori Spring Boot app NAHI chalati (DB, saari Services load
+       nahi hoti) - SIRF Web layer (Controller) load karta hai.
+    -> FAST test, kyunki DB connect nahi hota.
+
+    ANALOGY: Poora restaurant khol dena vs sirf ek counter test karna.
+
+
+ ------------------------------------------------------------------
+ 2) @Autowired MockMvc mockMvc
+ ------------------------------------------------------------------
+    -> FAKE HTTP client - Postman jaisa kaam karta hai bina real
+       server chalaye.
+    -> mockMvc.perform(get("/api/books")) = fake request bhejna
+
+
+ ------------------------------------------------------------------
+ 3) @MockBean BookService bookService
+ ------------------------------------------------------------------
+    -> Real BookService (jo DB se connect hota) ki jagah
+       FAKE/MOCK BookService inject karta hai is test ke liye.
+    -> Real DB touch hi nahi hota, tu control karta hai fake
+       service kya return karega.
+
+
+ ------------------------------------------------------------------
+ 4) @Autowired ObjectMapper objectMapper
+ ------------------------------------------------------------------
+    -> Java object -> JSON string convert karta hai
+    -> POST request ki body banane ke kaam aata hai
+       (objectMapper.writeValueAsString(newBook))
+
+
+ ------------------------------------------------------------------
+ 5) @WithMockUser(roles = {"ADMIN", "MEMBER"})
+ ------------------------------------------------------------------
+    -> FAKE LOGIN simulate karta hai.
+    -> Bina real JWT token banaye, security-protected endpoint
+       test kar sakte hain.
+    -> roles = "ADMIN"        -> sirf ADMIN wala fake user
+    -> roles = {"ADMIN","MEMBER"} -> dono roles wala fake user
+    -> Annotation hi NAHI lagai -> matlab bina login ke request
+
+
+ ------------------------------------------------------------------
+ 6) Mockito Core Syntax
+ ------------------------------------------------------------------
+    when(bookService.getAllBooks()).thenReturn(list);
+    -> "Jab bhi getAllBooks() call ho, real DB query mat karo,
+        ye fake list return kar do"
+
+    when(bookService.saveBook(any(Book.class))).thenReturn(newBook);
+    -> any(Book.class) = "chahe koi bhi Book object aaye, care
+        nahi karna, bas fake newBook return karo"
+    -> exact object match karne ki tension nahi leni padti
+
+
+ ------------------------------------------------------------------
+ 7) mockMvc.perform() + andExpect() Chain
+ ------------------------------------------------------------------
+    mockMvc.perform(get("/api/books"))          // fake GET request
+        .andExpect(status().isOk())              // assert 200
+        .andExpect(jsonPath("$[0].title")        // response JSON
+                .value("Atomic Habits"));         // ke andar check
+
+    mockMvc.perform(post("/api/books")
+            .contentType("application/json")      // body JSON hai
+            .content(objectMapper.writeValueAsString(newBook)))
+        .andExpect(status().isCreated());         // assert 201
+
+    jsonPath("$[0].title") -> array ke 0th index ka "title" field
+    ($  = root, [0] = first item, .title = uska field)
+
+
+ ------------------------------------------------------------------
+ 8) 4 TEST CASES - SUMMARY TABLE
+ ------------------------------------------------------------------
+
+    Test                          | User        | Expected | Proves
+    ------------------------------|-------------|----------|------------------
+    testGetAllBooks_Success       | ADMIN+MEMBER| 200 OK   | Logged-in user
+                                   |             |          | data dekh sakta hai
+    ------------------------------|-------------|----------|------------------
+    testAddBook_AsAdmin_Success   | ADMIN       | 201      | ADMIN add kar
+                                   |             | Created  | sakta hai
+    ------------------------------|-------------|----------|------------------
+    testAddBook_AsMember_Forbidden| MEMBER      | 403      | MEMBER add NAHI
+                                   |             | Forbidden| kar sakta -
+                                   |             |          | SECURITY PROOF
+    ------------------------------|-------------|----------|------------------
+    testGetAllBooks_WithoutLogin  | (no login)  | 401      | Bina login
+    _Unauthorized                 |             |Unauthoriz| access nahi
+                                   |             |ed        | milta
+
+
+ ------------------------------------------------------------------
+ JS/JEST ANALOGY (Apna Background Use Karke Yaad Rakh):
+ ------------------------------------------------------------------
+
+    // Jest + Supertest equivalent
+    test('GET /api/books returns 200', async () => {
+      jest.spyOn(bookService, 'getAllBooks').mockReturnValue([book]);
+      const res = await request(app).get('/api/books');
+      expect(res.status).toBe(200);
+    });
+
+    @MockBean              <->  jest.spyOn().mockReturnValue()
+    mockMvc.perform()      <->  request(app).get()
+    andExpect()            <->  expect()
+    @WithMockUser          <->  fake auth middleware/session inject
+
+
+ ------------------------------------------------------------------
+ GOLDEN RULE (Yaad Rakhne Wali Line):
+ ------------------------------------------------------------------
+
+    @WebMvcTest  = sirf Controller layer test (DB/Service real nahi)
+    @MockBean    = Service ko FAKE bana do
+    @WithMockUser = LOGIN FAKE karo (role ke sath)
+    mockMvc      = FAKE Postman (bina real server ke)
+
+
+ ------------------------------------------------------------------
+ INTERVIEW ONE-LINER (Bolne Ke Liye Ready):
+ ------------------------------------------------------------------
+
+    "Maine @WebMvcTest aur MockMvc use karke Controller layer ko
+     isolate karke test kiya, @MockBean se Service fake kiya, aur
+     @WithMockUser se different roles (ADMIN/MEMBER) simulate karke
+     role-based access control (403/401) bhi verify kiya - bina
+     real DB ya real JWT token ke."
+
+========================================================================
+*/

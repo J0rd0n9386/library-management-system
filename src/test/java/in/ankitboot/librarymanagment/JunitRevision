@@ -1,0 +1,444 @@
+=============================
+JUnit + Mockito Revision Notes
+=============================
+
+----------------------------------
+1. JUnit Kya Hai?
+----------------------------------
+
+JUnit ek Java Testing Framework hai jisse hum apne code ko automatically test karte hain.
+
+Purpose:
+✔ Business logic sahi hai ya nahi.
+✔ Future changes se bug aaya ya nahi.
+✔ Manual testing ka time bachana.
+
+Example:
+
+public int add(int a, int b){
+    return a+b;
+}
+
+JUnit Test
+
+@Test
+void testAdd(){
+    assertEquals(5, calculator.add(2,3));
+}
+
+----------------------------------
+2. Postman vs JUnit
+----------------------------------
+
+Postman
+--------
+• Manual Testing
+• Spring Boot application run honi chahiye.
+• API ko manually hit karte hain.
+• Har baar request bhejni padti hai.
+
+JUnit
+------
+• Automatic Testing
+• Code automatically test hota hai.
+• Ek click me 100 tests chal sakte hain.
+• CI/CD me automatically run hota hai.
+
+Example
+
+Postman
+
+POST /books
+
+↓
+
+Response dekho
+
+↓
+
+Database check karo
+
+
+JUnit
+
+Run Tests
+
+↓
+
+Pass/Fail instantly
+
+
+----------------------------------
+3. Mockito Kya Hai?
+----------------------------------
+
+Mockito ek Mocking Framework hai.
+
+Ye fake objects banata hai.
+
+Real database ki jagah fake repository use hoti hai.
+
+Real
+
+BookService
+
+↓
+
+BookRepository
+
+↓
+
+MySQL
+
+
+Mockito
+
+BookService
+
+↓
+
+Fake BookRepository
+
+↓
+
+No Database
+
+
+----------------------------------
+4. Mockito Kyu Use Karte Hain?
+----------------------------------
+
+Problem
+
+BookService
+
+↓
+
+Repository
+
+↓
+
+Database
+
+Agar database down hai to test fail.
+
+Lekin hume sirf Service test karni hai.
+
+Solution
+
+Mockito fake repository bana deta hai.
+
+Example
+
+@Mock
+BookRepository repository;
+
+when(repository.findById(1L))
+.thenReturn(Optional.of(book));
+
+Matlab
+
+Agar id=1 maange
+
+↓
+
+Database mat jaana
+
+↓
+
+Ye book return kar dena.
+
+
+----------------------------------
+5. verify() Kya Hai?
+----------------------------------
+
+verify() check karta hai ki koi method call hui ya nahi.
+
+Example
+
+bookService.addBook(book);
+
+verify(bookRepository).save(book);
+
+Meaning
+
+Check karo save() method call hui ya nahi.
+
+
+----------------------------------
+6. assertEquals() Kya Hai?
+----------------------------------
+
+Expected aur Actual compare karta hai.
+
+Example
+
+assertEquals("Java", book.getTitle());
+
+Expected = Java
+
+Actual = Java
+
+↓
+
+PASS
+
+
+----------------------------------
+7. Kiska JUnit Test Likhen?
+----------------------------------
+
+✔ Service Classes
+
+BookService
+
+UserService
+
+IssueService
+
+AuthService
+
+FineCalculatorService
+
+Reason
+
+Business Logic yahi hoti hai.
+
+------------------------
+
+✔ Utility Classes
+
+DateUtil
+
+PasswordGenerator
+
+FineCalculatorService
+
+------------------------
+
+✔ Controller
+
+MockMvc se API test karte hain.
+
+------------------------
+
+❌ Entity
+
+Book
+
+User
+
+BookCopy
+
+Reason
+
+Sirf getters/setters hote hain.
+
+Business logic nahi hoti.
+
+------------------------
+
+❌ Repository
+
+BookRepository
+
+UserRepository
+
+Reason
+
+Ye Spring Data JPA already bana deta hai.
+
+------------------------
+
+❌ DTO
+
+BookRequest
+
+BookResponse
+
+Reason
+
+Sirf data carry karte hain.
+
+
+----------------------------------
+8. Mockito Flow
+----------------------------------
+
+BookService
+
+↓
+
+Repository.findById()
+
+↓
+
+Mockito
+
+↓
+
+Fake Book Return
+
+↓
+
+Service Logic Execute
+
+↓
+
+Test Pass
+
+
+----------------------------------
+9. Real Company Example
+----------------------------------
+
+Amazon
+
+placeOrder()
+
+↓
+
+Developer code change karta hai.
+
+↓
+
+JUnit automatically run hoti hai.
+
+↓
+
+Test Fail
+
+↓
+
+Bug production me nahi jata.
+
+Agar JUnit na ho
+
+↓
+
+Bug customer tak pahunch sakta hai.
+
+
+----------------------------------
+10. JUnit + Mockito + Postman
+----------------------------------
+
+JUnit
+
+↓
+
+Business Logic Test
+
+------------------------
+
+Mockito
+
+↓
+
+Fake Dependencies
+
+↓
+
+Repository ko mock karta hai.
+
+------------------------
+
+MockMvc
+
+↓
+
+Controller/API Testing
+
+↓
+
+Postman ki tarah code se testing.
+
+------------------------
+
+Postman
+
+↓
+
+Manual API Testing
+
+↓
+
+Frontend jaisa request bhejna.
+
+
+----------------------------------
+11. Interview Answer
+----------------------------------
+
+Q. Difference between JUnit and Mockito?
+
+Answer
+
+JUnit is used to test the code.
+
+Mockito is used to create mock objects so that dependencies like Repository or External APIs can be tested without using real implementations.
+
+----------------------------------
+12. Resume Point
+----------------------------------
+
+Implemented Unit Testing using JUnit 5 and Mockito.
+
+Created MockMvc tests for REST APIs.
+
+Tested Service layer business logic with mocked repositories.
+
+----------------------------------
+13. Easy Memory Trick
+----------------------------------
+
+JUnit
+
+=
+Code test karta hai.
+
+Mockito
+
+=
+Dependency ki acting karta hai.
+
+MockMvc
+
+=
+Controller test karta hai.
+
+Postman
+
+=
+API manually test karta hai.
+
+Database
+
+=
+Real data.
+
+Mockito
+
+=
+Fake data.
+
+=============================
+1 Line Summary
+=============================
+
+JUnit → Code Test
+
+Mockito → Fake Dependency
+
+MockMvc → Controller Test
+
+Postman → Manual API Test
+
+Repository → Usually Mock
+
+Service → Always Test
+
+Entity → No Need
+
+Controller → MockMvc Test
